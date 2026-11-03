@@ -4,7 +4,18 @@ import numpy as np
 def smoothFunc(t):return (6*(t**5))-(15*(t**4))+(10*(t**3))
 def noise(x,y,a):return ((1-a)*x)+(a*y)
 
-def perlinImageGen(imageSZ, cellCount):
+def fbm (st,x,y,a,O):
+    value = 0
+    amplitude = 0.2
+    i=0
+    while i < O:
+        value += amplitude*noise(x,y,a);
+        st *= 2
+        amplitude *= 0.5
+        i+= 1
+    return value;
+
+def perlinImageGen(imageSZ,cellCount,name,O):
     grid = 2**cellCount
     gradientVectors = [
         np.array([0,1]),
@@ -17,7 +28,7 @@ def perlinImageGen(imageSZ, cellCount):
         np.array([-np.sqrt(2)/2,-np.sqrt(2)/2])
     ]
     image = Image.new('RGB', (imageSZ,imageSZ), 1)
-    image.save('test.jpg')
+    image.save('perl.jpg')
 
     vectors = []
     for i in range(grid+1):
@@ -30,31 +41,58 @@ def perlinImageGen(imageSZ, cellCount):
         for x in range(0,grid+1):
             corners.append(np.array([x*increment,y*increment]))
 
-    with Image.open('test.jpg') as im:
+    with Image.open('perl.jpg') as im:
         cellSZ = increment
         for y in range(imageSZ):
+            y_CZ = (y%cellSZ)/cellSZ
             for x in range(imageSZ):
-                xPos, yPos = int(x/cellSZ),int(y/cellSZ)
+                xPos, yPos, x_CZ = int(x/cellSZ),int(y/cellSZ),(x%cellSZ)/cellSZ
                 if xPos==grid:xPos = grid-1
                 if yPos==grid:yPos = grid-1
-                if x==255: x=254.9
-                if y==255: y=254.9
-                u = np.dot(vectors[yPos][xPos], ((x%cellSZ)/cellSZ,(y%cellSZ)/cellSZ))
-                v = np.dot(vectors[yPos][xPos+1], ((x%cellSZ)/cellSZ-1,(y%cellSZ)/cellSZ))
-                s = np.dot(vectors[yPos+1][xPos], ((x%cellSZ)/cellSZ,(y%cellSZ)/cellSZ-1))
-                t = np.dot(vectors[yPos+1][xPos+1], ((x%cellSZ)/cellSZ-1,(y%cellSZ)/cellSZ-1))
-                st = noise(s,t,smoothFunc((x%cellSZ)/cellSZ))
-                uv = noise(u,v,smoothFunc((x%cellSZ)/cellSZ))
-                noiseRes = noise(uv,st,smoothFunc((y%cellSZ)/cellSZ))
-                if x==254.9:x=255
-                if y==254.9:y=255
+                if x==imageSZ-1: x=imageSZ-1.1
+                if y==imageSZ-1: y=imageSZ-1.1
+                u = np.dot(vectors[yPos][xPos], (x_CZ,y_CZ))
+                v = np.dot(vectors[yPos][xPos+1], (x_CZ-1,y_CZ))
+                s = np.dot(vectors[yPos+1][xPos], (x_CZ,y_CZ-1))
+                t = np.dot(vectors[yPos+1][xPos+1], (x_CZ-1,y_CZ-1))
+                st = noise(s,t,smoothFunc(x_CZ))
+                uv = noise(u,v,smoothFunc(x_CZ))
+                noiseRes = noise(uv,st,smoothFunc(y_CZ))
+                noiseRes = fbm(noise(uv,st,smoothFunc(y_CZ)) * 3,uv,st,smoothFunc(y_CZ), O)
+                if x==imageSZ-1.1:x=imageSZ-1
+                if y==imageSZ-1.1:y=imageSZ-1
                 #if (noiseRes)>=0.05:
                 #    im.putpixel((int(x),int(y)), (int(125),int(125),int(0)))
                 #if (noiseRes)<0.05:
                 #    im.putpixel((int(x),int(y)), (int(0),int(0),int(0)))
-                im.putpixel((int(x),int(y)), (int(255*noiseRes+30),int(255*noiseRes+30),int(255*noiseRes+30)))
-        im.save('test.jpg')
+                im.putpixel((int(x),int(y)), (int(125-255*noiseRes),int(125-255*noiseRes),int(125-255*noiseRes)))
+        im.save('perl' + f"{name}" + '.jpg')
 
-perlinImageGen(256,3)
+def perlStack(n,s):
+    test=[]
+    im0 = Image.open('perl0.jpg')
+    im1 = Image.open('perl1.jpg')
+    im2 = Image.open('perl2.jpg')
+    imRes = Image.open('perl.jpg')
+
+    perlinImageGen(s,2,'0',1)
+    perlinImageGen(s,3,'1',2)
+    perlinImageGen(s,2,'2',1)
+
+    for y in range(s):
+        for x in range(s):
+            try:
+                c0 = im0.getpixel((x,y))[0]
+                c1 = im0.getpixel((x,y))[0]
+                c2 = im0.getpixel((x,y))[0]
+            except:
+                continue
+            average = int((c0+c1+c2)/3)
+            imRes.putpixel((x,y), (average,average,average))
+    imRes.save('perl.jpg')
+
+
+#3perlStack(3,256)
+perlinImageGen(256,4,"",4)
     
 
