@@ -6,7 +6,7 @@ def noise(x,y,a):return ((1-a)*x)+(a*y)
 
 def fbm (st,x,y,a,O):
     value = 0
-    amplitude = 0.2
+    amplitude = 0.3
     i=0
     while i < O:
         value += amplitude*noise(x,y,a);
@@ -70,21 +70,20 @@ def perlinImageGen(imageSZ,cellCount,name,O):
 
 def perlStack(n,s):
     test=[]
+    perlinImageGen(s,1,'0',1)
+    perlinImageGen(s,1,'1',2)
+    perlinImageGen(s,3,'2',3)
+
     im0 = Image.open('perl0.jpg')
     im1 = Image.open('perl1.jpg')
     im2 = Image.open('perl2.jpg')
     imRes = Image.open('perl.jpg')
-
-    perlinImageGen(s,2,'0',1)
-    perlinImageGen(s,3,'1',2)
-    perlinImageGen(s,2,'2',1)
-
     for y in range(s):
         for x in range(s):
             try:
                 c0 = im0.getpixel((x,y))[0]
-                c1 = im0.getpixel((x,y))[0]
-                c2 = im0.getpixel((x,y))[0]
+                c1 = im1.getpixel((x,y))[0]
+                c2 = im2.getpixel((x,y))[0]
             except:
                 continue
             average = int((c0+c1+c2)/3)
@@ -92,7 +91,7 @@ def perlStack(n,s):
     imRes.save('perl.jpg')
 
 
-#3perlStack(3,256)
-perlinImageGen(256,4,"",4)
+perlStack(3,256)
+#perlinImageGen(256,4,"",4)
     
 
