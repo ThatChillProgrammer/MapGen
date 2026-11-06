@@ -6,7 +6,7 @@ def noise(x,y,a):return ((1-a)*x)+(a*y)
 
 def fbm (st,x,y,a,O):
     value = 0
-    amplitude = 0.3
+    amplitude = 1
     i=0
     while i < O:
         value += amplitude*noise(x,y,a);
@@ -65,19 +65,16 @@ def perlinImageGen(imageSZ,cellCount,name,O):
                 #    im.putpixel((int(x),int(y)), (int(125),int(125),int(0)))
                 #if (noiseRes)<0.05:
                 #    im.putpixel((int(x),int(y)), (int(0),int(0),int(0)))
-                im.putpixel((int(x),int(y)), (int(125-255*noiseRes),int(125-255*noiseRes),int(125-255*noiseRes)))
-        im.save('perl' + f"{name}" + '.jpg')
+                im.putpixel((int(x),int(y)), (int(70-255*noiseRes),int(70-255*noiseRes),int(70-255*noiseRes)))
+        return im
 
 def perlStack(n,s):
     test=[]
-    perlinImageGen(s,1,'0',1)
-    perlinImageGen(s,1,'1',2)
-    perlinImageGen(s,3,'2',3)
-
-    im0 = Image.open('perl0.jpg')
-    im1 = Image.open('perl1.jpg')
-    im2 = Image.open('perl2.jpg')
+    im0 = perlinImageGen(s,1,'0',1)
+    im1 = perlinImageGen(s,2,'1',2)
+    im2 = perlinImageGen(s,3,'2',3)
     imRes = Image.open('perl.jpg')
+    avrg = []
     for y in range(s):
         for x in range(s):
             try:
@@ -87,11 +84,21 @@ def perlStack(n,s):
             except:
                 continue
             average = int((c0+c1+c2)/3)
-            imRes.putpixel((x,y), (average,average,average))
+            avrg.append(average)
+            imRes.putpixel((x,y), (average-50,average-50,average-50))
+
+            if average < 255 and average > -10:
+                imRes.putpixel((x,y), (255,255,255))
+            if average < 255 and average > 0:
+                imRes.putpixel((x,y), (58,58,87))
+            if average < 255 and average > 15:
+                imRes.putpixel((x,y), (0,125,0))
+            if average < 170 and average > 70:
+                imRes.putpixel((x,y), (183,176,107))
+            if average > 80 and average < 200:
+                imRes.putpixel((x,y), (0,0,200))
+            if average > 100 and average < 255:
+                imRes.putpixel((x,y), (0,0,125))
     imRes.save('perl.jpg')
 
-
-perlStack(3,256)
-#perlinImageGen(256,4,"",4)
-    
-
+perlStack(3,1024)
